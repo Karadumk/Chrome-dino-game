@@ -4,11 +4,66 @@ from pathlib import Path
 
 pygame.init()
 
-SCREEN_WIDTH = 1200  # 623
-SCREEN_HEIGHT = 400  # 150
+SCREEN_WIDTH = 623
+SCREEN_HEIGHT = 150
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Dino")  # Add a window title
+
+
+class Dino:
+    def __init__(self) -> None:
+        self.width = 44
+        self.height = 44
+        self.x = 10
+        self.y = 80
+        self.texture_num = 0
+        self.dy = 3
+        self.gravity = 1.2
+        self.onground = True
+        self.jumping = False
+        self.jump_stop = 10
+        self.falling = False
+        self.fall_stop = self.y
+        self.set_texture()
+        self.show()
+
+    def update(self, loops):
+        # jumping
+        if self.jumping:
+            self.y -= self.dy
+            if self.y <= self.jump_stop:
+                self.fall()
+        # falling
+        elif self.falling:
+            self.y += self.gravity * self.dy
+            if self.y >= self.fall_stop:
+                self.stop()
+        # walking
+        elif self.onground and loops % 4 == 0:  # adding delay to the method
+            self.texture_num = (self.texture_num + 1) % 3
+            self.set_texture()
+
+    def show(self,):
+        screen.blit(self.texture, (self.x, self.y))
+
+    def set_texture(self,):
+        path = Path(f"assets/images/dino{self.texture_num}.png")
+        self.texture = pygame.image.load(path)
+        self.texture = pygame.transform.scale(self.texture, (self.width, self.height))
+    
+    # these methods controls booleans not responsible for physics
+    def jump(self):  
+        self.jumping = True
+        self.onground = False
+
+    def fall(self):
+        self.jumping = False
+        self.falling = True
+
+    def stop(self):
+        self.falling = False
+        self.onground = True
 
 
 class Background:
@@ -37,25 +92,45 @@ class Background:
 class Game:
     def __init__(self) -> None:
         self.background = [Background(x=0), Background(x=SCREEN_WIDTH)]
+        self.dino = Dino()
         self.speed = 8
 
 
 def main():
+
+    # objects
     game = Game()
+    dino = game.dino
 
     clock = pygame.time.Clock()
 
+    loops = 0
+
+    # main loop
     while True:
+        loops += 1
+
+        # for background
         for background in game.background:
             background.update(-game.speed)
             background.show()
 
+        # for dino
+        dino.update(loops)
+        dino.show()
+
+        # events
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
 
-        clock.tick(100)  # framerate
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    if dino.onground:
+                        dino.jump()
+
+        clock.tick(80)  # framerate
         # Update the display
         pygame.display.update()
 

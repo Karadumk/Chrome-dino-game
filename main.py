@@ -1,3 +1,4 @@
+import random
 import sys
 import pygame
 from pathlib import Path
@@ -44,16 +45,20 @@ class Dino:
             self.texture_num = (self.texture_num + 1) % 3
             self.set_texture()
 
-    def show(self,):
+    def show(
+        self,
+    ):
         screen.blit(self.texture, (self.x, self.y))
 
-    def set_texture(self,):
+    def set_texture(
+        self,
+    ):
         path = Path(f"assets/images/dino{self.texture_num}.png")
         self.texture = pygame.image.load(path)
         self.texture = pygame.transform.scale(self.texture, (self.width, self.height))
-    
+
     # these methods controls booleans not responsible for physics
-    def jump(self):  
+    def jump(self):
         self.jumping = True
         self.onground = False
 
@@ -67,7 +72,10 @@ class Dino:
 
 
 class Background:
-    def __init__(self, x,) -> None:
+    def __init__(
+        self,
+        x,
+    ) -> None:
         self.width = SCREEN_WIDTH
         self.height = SCREEN_HEIGHT
         self.x = x
@@ -75,16 +83,44 @@ class Background:
         self.set_texture()
         self.show()
 
-    def update(self, dx,):
+    def update(
+        self,
+        dx,
+    ):
         self.x += dx
         if self.x <= -SCREEN_WIDTH:
             self.x = SCREEN_WIDTH
 
-    def show(self,):
+    def show(
+        self,
+    ):
         screen.blit(self.texture, (self.x, self.y))
 
-    def set_texture(self,):
+    def set_texture(
+        self,
+    ):
         path = Path("assets/images/bg.png")
+        self.texture = pygame.image.load(path)
+        self.texture = pygame.transform.scale(self.texture, (self.width, self.height))
+
+
+class Cactus:
+    def __init__(self, x) -> None:
+        self.width = 34
+        self.height = 44
+        self.x = x
+        self.y = 80
+        self.set_texture()
+        self.show()
+
+    def update(self, dx):
+        self.x += dx
+
+    def show(self):
+        screen.blit(self.texture, (self.x, self.y))
+
+    def set_texture(self):
+        path = Path("assets/images/cactus.png")
         self.texture = pygame.image.load(path)
         self.texture = pygame.transform.scale(self.texture, (self.width, self.height))
 
@@ -93,7 +129,28 @@ class Game:
     def __init__(self) -> None:
         self.background = [Background(x=0), Background(x=SCREEN_WIDTH)]
         self.dino = Dino()
-        self.speed = 8
+        self.obstacles = []
+        self.speed = 6
+
+    def tospawn(self, loops):  # responsible for time to spawn cactus
+        return loops % 60 == 0
+
+    def spawn_cactus(self):
+        # list with cactus objects
+        if len(self.obstacles) > 0:
+            prev_cactus = self.obstacles[-1]
+            x = random.randint(
+                prev_cactus.x + self.dino.width + 84,
+                SCREEN_WIDTH + prev_cactus.x + self.dino.width + 84,
+            )
+
+        # empty list
+        else:
+            x = random.randint(SCREEN_WIDTH + 100, 1000)
+
+        # create new cactus object
+        cactus = Cactus(x)
+        self.obstacles.append(cactus)
 
 
 def main():
@@ -119,6 +176,14 @@ def main():
         dino.update(loops)
         dino.show()
 
+        # for cactus
+        if game.tospawn(loops):
+            game.spawn_cactus()
+
+        for cactus in game.obstacles:
+            cactus.update(-game.speed)
+            cactus.show()
+
         # events
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -133,5 +198,6 @@ def main():
         clock.tick(80)  # framerate
         # Update the display
         pygame.display.update()
+
 
 main()

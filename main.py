@@ -1,6 +1,7 @@
 import random
 import sys
 import pygame
+import math
 from pathlib import Path
 
 pygame.init()
@@ -125,12 +126,26 @@ class Cactus:
         self.texture = pygame.transform.scale(self.texture, (self.width, self.height))
 
 
+class Collision:
+    def between(self, dino, object):
+        distance = math.sqrt((dino.x - object.x) ** 2 + (dino.y - object.y) ** 2)
+        return distance < 35
+    
+    
 class Game:
     def __init__(self) -> None:
         self.background = [Background(x=0), Background(x=SCREEN_WIDTH)]
         self.dino = Dino()
         self.obstacles = []
+        self.collision = Collision()
         self.speed = 6
+        self.playing = False
+        
+    def start(self):
+        self.playing = True
+
+    def over(self):
+        self.playing = False
 
     def tospawn(self, loops):  # responsible for time to spawn cactus
         return loops % 80 == 0
@@ -163,27 +178,33 @@ def main():
 
     # main loop
     while True:
-        loops += 1
-
-        # for background
-        for background in game.background:
-            background.update(-game.speed)
-            background.show()
-
-        # for dino
-        dino.update(loops)
-        dino.show()
-
-        # for cactus
-        if game.tospawn(loops):
-            game.spawn_cactus()
-
-        for cactus in game.obstacles:
-            cactus.update(-game.speed)
-            cactus.show()
         
-        # cleanup
-        game.obstacles = [c for c in game.obstacles if c.x + c.width > 0]
+        if game.playing:
+            loops += 1
+
+            # for background
+            for background in game.background:
+                background.update(-game.speed)
+                background.show()
+
+            # for dino
+            dino.update(loops)
+            dino.show()
+
+            # for cactus
+            if game.tospawn(loops):
+                game.spawn_cactus()
+
+            for cactus in game.obstacles:
+                cactus.update(-game.speed)
+                cactus.show()
+                
+                # collision
+                if game.collision.between(dino, cactus):
+                    game.over()
+        
+            # cleanup
+            game.obstacles = [c for c in game.obstacles if c.x + c.width > 0]
 
         # events
         for event in pygame.event.get():
@@ -195,6 +216,9 @@ def main():
                 if event.key == pygame.K_SPACE:
                     if dino.onground:
                         dino.jump()
+                        
+                    if not game.playing:
+                        game.start()
 
         clock.tick(80)  # framerate
         # Update the display

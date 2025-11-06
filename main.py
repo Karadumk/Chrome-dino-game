@@ -133,20 +133,18 @@ class Game:
         self.speed = 6
 
     def tospawn(self, loops):  # responsible for time to spawn cactus
-        return loops % 60 == 0
+        return loops % 80 == 0
 
     def spawn_cactus(self):
         # list with cactus objects
         if len(self.obstacles) > 0:
-            prev_cactus = self.obstacles[-1]
-            x = random.randint(
-                prev_cactus.x + self.dino.width + 84,
-                SCREEN_WIDTH + prev_cactus.x + self.dino.width + 84,
-            )
-
-        # empty list
+            last_cactus = self.obstacles[-1]
+            # Make sure to always spawn ahead of the screen
+            min_gap = 200
+            max_gap = 400
+            x = max(last_cactus.x, SCREEN_WIDTH) + random.randint(min_gap, max_gap)
         else:
-            x = random.randint(SCREEN_WIDTH + 100, 1000)
+            x = SCREEN_WIDTH + random.randint(100, 400)
 
         # create new cactus object
         cactus = Cactus(x)
@@ -183,6 +181,9 @@ def main():
         for cactus in game.obstacles:
             cactus.update(-game.speed)
             cactus.show()
+        
+        # cleanup
+        game.obstacles = [c for c in game.obstacles if c.x + c.width > 0]
 
         # events
         for event in pygame.event.get():
@@ -201,4 +202,3 @@ def main():
 
 
 main()
-# testing git works

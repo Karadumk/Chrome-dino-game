@@ -4,7 +4,7 @@
 remake of the popular chrome dino game.
 
 ## Snapshots
-![Project Screenshot](snapshot.png)
+![Project Screenshot](./assets/images/snapshot.png)
 
 ## Acknowledgements
 
